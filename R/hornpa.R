@@ -9,6 +9,7 @@
 #'
 #'If principal axis factoring is specified, squared multiple correlations are substituted in the diagonal
 #'of the correlation matrix. 
+#'@importFrom stats cor quantile rnorm
 #'@param k The number of variables in your dataset.
 #'@param size The number of observations in your dataset.
 #'@param reps How many simulated datasets to create.
@@ -16,62 +17,62 @@
 #'@param p Specify the percentile which to evaluate the eigenvalues. Defaults to the 95th percentile.
 #'@param method Specify what type of analysis is run (using a principal component analysis or principal axis factoring). Defaults to pca if not specified.
 #'@return Mean and the specified percentile eigenvalues based on a user defined set of random datasets. Compare the eigenvalues from your dataset to the eigenvalues generated with the synthetic datasets. Results are comparable to the SPSS and SAS syntax written by O'Connor (2000).
-#'@examples hornpa(k=10,size=100,reps=200)
-#' hornpa(k=15,size=100,reps=200,method="pa",seed=123)
-#' hornpa(k=12,size=200,reps=100,p=.99)
+#'@examples hornpa(k = 10, size = 100, reps = 200)
+#' hornpa(k = 15, size = 100, reps = 200, method = "pa", seed = 123)
+#' hornpa(k = 12, size = 200, reps = 100, p = .99)
 #' @references Horn, J. (1965). A rationale and test for the number of factors in factor analysis. Psychometrika, 32, 179-185.
 #' 
 #' O'Connor, B. (2000). SPSS and SAS programs for determining the number of components using parallel analysis and Velicer's MAP test, Behavior Research Methods, Instruments and Computers, 32, 396-402.
 #' 
 #' 
 #'@export
-hornpa<-function(k,size=100,reps=100,seed=NA,p=.95,method=c("pca","pa")){
+hornpa<-function(k, size = 100, reps = 100, seed = NA, p = .95, method = c("pca", "pa")){
 
-method<-match.arg(method)
-dat<-matrix(NA,nrow=size,ncol=k)
-ev<-matrix(NA,nrow=reps,ncol=k)
-if(is.na(seed)){xx<-1 
-                seed<-(abs(rnorm(1))*100)}
-xx<-ifelse(exists("xx"),xx,2)
+method <- match.arg(method)
+dat <- matrix(NA, nrow = size, ncol = k)
+ev <- matrix(NA, nrow = reps, ncol = k)
+if(is.na(seed)){xx <- 1 
+                seed <- (abs(rnorm(1)) * 100)}
+xx <- ifelse(exists("xx"), xx, 2)
 set.seed(seed)
 for (r in 1:reps){
 for (i in 1:k) {
-     dat[,i]<-rnorm(size,0,1)
+     dat[,i] <- rnorm(size, 0, 1)
 }
 
-cm<-cor(dat)
-if(method=="pa"){
-     smc<-1-(1/diag(solve(cm)))
-     diag(cm)<-smc
+cm <- cor(dat)
+if(method == "pa"){
+     smc <- 1 - (1/diag(solve(cm)))
+     diag(cm) <- smc
 }
-v<-eigen(cm)
+v <- eigen(cm)
 v$values
-ev[r,1:k]<-v$values
+ev[r, 1:k] <- v$values
 }
 
-out<-matrix(rep(1:k),nrow=k,ncol=3)
-out[,2]<-colMeans(ev)
+out <- matrix(rep(1:k), nrow = k, ncol = 3)
+out[,2] <- colMeans(ev)
 for (x in 1:k){
-     out[x,3]<-quantile(ev[,x],probs=c(p))
+     out[x,3] <- quantile(ev[,x], probs=c(p))
 }
 
 
 cat("\n","Parallel Analysis Results", " \n","\n")
-cat("Method:",method,"\n")
-cat("Number of variables:",k, "\n")
-cat("Sample size:",size,"\n")
-cat("Number of correlation matrices:",reps,"\n")
-if(xx != 1) {cat("Seed:",seed,"\n")}
-cat("Percentile:",p,"\n","\n")
+cat("Method:", method, "\n")
+cat("Number of variables:", k, "\n")
+cat("Sample size:", size, "\n")
+cat("Number of correlation matrices:", reps, "\n")
+if(xx != 1) {cat("Seed:", seed,"\n")}
+cat("Percentile:", p, "\n\n")
 
 
-out2<-data.frame(round(out,3))
-names(out2)<-c("Factor","Mean",p)
-if(method=="pca"){
-     names(out2)<-c("Component","Mean",p)
+out2 <- data.frame(round(out,3))
+names(out2) <- c("Factor", "Mean", p)
+if(method == "pca"){
+     names(out2) <- c("Component", "Mean", p)
 }
-cat("Compare your observed eigenvalues from your original dataset to the",p*100,"percentile in the table below generated using random data. If your eigenvalue is greater than the percentile indicated (not the mean), you have support to retain that factor/component.","\n \n")
-print(out2,row.names=F)
+cat("Compare your observed eigenvalues from your original dataset to the", p*100, "percentile in the table below generated using random data. If your eigenvalue is greater than the percentile indicated (not the mean), you have support to retain that factor/component.","\n \n")
+print(out2, row.names = FALSE)
 }
 
 
